@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post your blog</title>
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.1/dist/quill.snow.css" rel="stylesheet" />
+    <link href="../assets/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="css/style.css" rel="stylesheet"/>
+</head>
+<body>  
+    <div  style="height: 100vh;">
+        <div class="d-flex flex-column  justify-content-center align-items-center h-100">
+        <h2 class="container text-center pb-3">Post blog</h2>
+        <div class="blog-div shadow p-4">
+            <div class="container my-3">
+                <input type="text" name="bgtitle" required class="form-control" placeholder="Enter blog title"/>
+            </div>
+            <div class="container my-3">
+                <select type="select" required class=" form-control" aria-label="Default select example">
+                    <option selected>Select Category</option>
+                    <option value="1">One</option>
+                    <option value="2">Two</option>
+                    <option value="3">Three</option>
+                  </select>
+            </div>
+            <form id="quillForm" method="post" class="container" action="serverWorks/post-it.php">
+                <div id="quillEditor" style="height: 200px;" class="d-flex justify-content-between"></div>
+                <input type="hidden" required name="content" id="content">
+                <button type="submit" class="btn btn-lg mt-3">Submit</button>
+            </form>
+        </div>
+    </div>
+    </div>
+
+
+    <script src="../assets/javascript/jquery.js"></script>
+    <script src="../assets/javascript/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.1/dist/quill.js"></script>
+    <script>
+
+function imageHandler() {
+            const input = document.createElement('input');
+            input.setAttribute('type', 'file');
+            input.setAttribute('accept', 'image/*');
+            input.click();
+
+            input.onchange = async () => {
+                const file = input.files[0];
+                const formData = new FormData();
+                formData.append('image', file);
+
+                // Send the image to your server for uploading
+                const res = await fetch('serverWorks/upload_image.php', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    const range = quill.getSelection();
+                    quill.insertEmbed(range.index, 'image', data.imageUrl, 'user');
+                }
+            };
+        }
+
+
+
+
+
+
+
+         const quill = new Quill('#quillEditor', {
+            theme: 'snow',
+            modules: {
+                toolbar: {
+                    container: [
+                        [{ 'header': [1,2,3,4,5,6,,] }],
+                        ['bold', 'italic', 'underline'],
+                        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                        ['link','image'], 
+                    ],
+                    handlers: {
+                        'image': imageHandler,
+                    },
+                },
+            }
+        });
+
+        // Before submitting the form, set the content field with the Quill content
+        document.getElementById('quillForm').onsubmit = function() {
+            // Get HTML content from Quill
+            const htmlContent = quill.root.innerHTML;
+            // Store it in the hidden input
+            document.getElementById('content').value = htmlContent;
+        };
+        function getQueryParam(name) {
+    const urlSearchParams = new URLSearchParams(window.location.search);
+    return urlSearchParams.get(name);
+}
+const jsonParam = getQueryParam('json');
+
+if (jsonParam) {
+    try {
+        const jsonData = JSON.parse(decodeURIComponent(jsonParam));
+        if(jsonData===true){
+
+            $("body").append(`<div class='container alert alert-success alert-dismissible fade show'><strong>Blog has been posted</strong><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`);
+        }else{
+            $("body").append(`<div class='container alert alert-danger alert-dismissible fade show'><strong>Cannot post the blog</strong><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`);
+        }
+    } catch (error) {
+        console.error('Error parsing JSON:', error);
+    }
+    } else {
+        console.error('No JSON data found in the URL');
+    }
+    </script>
+</body>
+</html>
